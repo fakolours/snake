@@ -1,0 +1,46 @@
+#define DATA  5
+#define RCLK7  6
+#define SRCLK7  7
+const int digit[] = {A1,A2,A3,A4};
+byte numbit[] = {63,6,91,79,102,109,125,7,127,111};
+void setup() {
+  // put your setup code here, to run once:
+
+   pinMode( DATA , OUTPUT );
+   pinMode( RCLK7 , OUTPUT );
+   pinMode( SRCLK7 , OUTPUT );
+   for (int i = 0; i <= 3 ; i++ ){
+    pinMode( digit[i], OUTPUT );
+    digitalWrite(digit[i], HIGH);
+   }
+   pinMode(1,OUTPUT);
+   pinMode(2,OUTPUT);
+   pinMode(3,OUTPUT);
+   digitalWrite(1, HIGH);
+   digitalWrite(2, HIGH);
+   digitalWrite(3, HIGH);
+}
+
+
+void loop() {
+ affiche_score(1809);
+}
+
+void affiche_score(int S){
+for ( int i = 0; i <=3; i++){
+    digitalWrite(digit[i], LOW);
+    int m2 = pow(10,4-i) + 0.5; //le + 0.5 permet d'avoir 10000 ou 1000 en int au lieu de 9999 ou 999, du à un bug ARDUINO // la fonction pow fonctionne en floats.
+    int p2 = pow(10,3-i) + 0.5;
+    int D = (score%m2)/p2;
+    digitalWrite( RCLK7 , LOW );
+    shiftOut(DATA , SRCLK7 , MSBFIRST , numbit[D]);
+    digitalWrite( RCLK7 , HIGH );
+    delay(1);
+    digitalWrite( RCLK7 , LOW ); // cette partie permet de ne pas avoir de "déchet" sur le chiffre suivant donc l'affichage est plus "clair"
+    shiftOut(DATA , SRCLK7 , MSBFIRST , 0x00);
+    digitalWrite( RCLK7 , HIGH );
+    for ( int j = 0; j <=3; j++){
+      digitalWrite(digit[j], HIGH);
+    }
+  }
+}
