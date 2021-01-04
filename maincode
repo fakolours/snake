@@ -1,46 +1,126 @@
-#define DATA  5
-#define RCLK7  6
-#define SRCLK7  7
-const int digit[] = {A1,A2,A3,A4};
-byte numbit[] = {63,6,91,79,102,109,125,7,127,111};
-void setup() {
-  // put your setup code here, to run once:
+#define SER 2 //multiplexe de la matrice
+#define RCLK 3 
+#define SRCLK 4
 
-   pinMode( DATA , OUTPUT );
-   pinMode( RCLK7 , OUTPUT );
-   pinMode( SRCLK7 , OUTPUT );
-   for (int i = 0; i <= 3 ; i++ ){
-    pinMode( digit[i], OUTPUT );
-    digitalWrite(digit[i], HIGH);
-   }
-   pinMode(1,OUTPUT);
-   pinMode(2,OUTPUT);
-   pinMode(3,OUTPUT);
-   digitalWrite(1, HIGH);
-   digitalWrite(2, HIGH);
-   digitalWrite(3, HIGH);
-}
+#define DATA 5 //multiplexe du 7 segment
+#define RCLK7 6
+#define SRCLK7 7
 
+#define H 12 //bouton haut
+#define B 13 //bouton bas
+#define G 14 //bouton gauche
+#define D 15 //bouton droit
 
-void loop() {
- affiche_score(1809);
-}
+#define haut 0
+#define bas 1
+#define gauche 2
+#define droite 3
 
-void affiche_score(int S){
-for ( int i = 0; i <=3; i++){
-    digitalWrite(digit[i], LOW);
+#define pot A0 //potentiomètre
+
+int direction = bas; //Direction de base du snake
+
+byte dessin[8];//tableau de gestion de la matrice
+
+const int digit[] = {A1,A2,A3,A4}; //pin des digits du 7 segments
+
+byte numbit[] = {63,6,91,79,102,109,125,7,127,111}; //chiffres en segments
+
+void affiche_7(int score){
+  for ( int i = 0; i <=3; i++){
+    
     int m2 = pow(10,4-i) + 0.5; //le + 0.5 permet d'avoir 10000 ou 1000 en int au lieu de 9999 ou 999, du à un bug ARDUINO // la fonction pow fonctionne en floats.
     int p2 = pow(10,3-i) + 0.5;
-    int D = (score%m2)/p2;
-    digitalWrite( RCLK7 , LOW );
-    shiftOut(DATA , SRCLK7 , MSBFIRST , numbit[D]);
-    digitalWrite( RCLK7 , HIGH );
-    delay(1);
-    digitalWrite( RCLK7 , LOW ); // cette partie permet de ne pas avoir de "déchet" sur le chiffre suivant donc l'affichage est plus "clair"
-    shiftOut(DATA , SRCLK7 , MSBFIRST , 0x00);
-    digitalWrite( RCLK7 , HIGH );
+    int S = (score%m2)/p2;
+    
+    digitalWrite(digit[i], LOW);
+      digitalWrite( RCLK7 , LOW );
+        shiftOut(DATA , SRCLK7 , MSBFIRST , numbit[D]);
+      digitalWrite( RCLK7 , HIGH );
+      digitalWrite( RCLK7 , LOW ); // cette partie permet de ne pas avoir de "déchet" sur le chiffre suivant donc l'affichage est plus "clair"
+        shiftOut(DATA , SRCLK7 , MSBFIRST , 0x00);
+      digitalWrite( RCLK7 , HIGH );
+    
     for ( int j = 0; j <=3; j++){
       digitalWrite(digit[j], HIGH);
     }
   }
 }
+
+void affiche_matrice (int cx,int cy){
+    dessin[cy] = bit(7-cx);
+    
+    for (int i = 0 ; i <= 7 ; i++ ){
+      byte p = bit(i);
+      digitalWrite ( RCLK, LOW ) ;
+        shiftOut( SER , SRCLK , LSBFIRST, p);
+        shiftOut( SER , SRCLK , LSBFIRST, ~(dessin[i]));
+      digitalWrite ( RCLK , HIGH ) ;
+  }
+}
+ 
+int appuyeBouton(int bouton) { //Check quel bouton est appuyé
+  int BA;
+  if (digitalRead(bouton),LOW){
+    if (BA = 0) {
+      BA = 1;
+      return true;
+    }
+    else if (digitalRead(H), HIGH) {      
+        BA = 0;
+        return false;
+    }
+  }
+}
+
+void CheckDirection() {
+  if (direction == haut || direction == bas) {
+    if (appuyeBouton(D) == HIGH) {
+      direction = droite;
+    }
+    if (appuyeBouton(G) == HIGH) {
+      direction = gauche;
+    }
+    else return direction;
+  }
+  if (direction == droite || direction == gauche) {
+    if (appuyeBouton(H) == HIGH) {
+      direction = haut;
+    }
+    if (appuyeBouton(B) == HIGH) {
+      direction = bas;
+    }
+    else return direction;
+  }
+}
+
+
+void setup() {
+ pinMode( DATA , OUTPUT );
+ pinMode( RCLK7 , OUTPUT );
+ pinMode( SRCLK7 , OUTPUT );
+ 
+ pinMode( SER , OUTPUT );
+ pinMode( RCLK , OUTPUT );
+ pinMode( SRCLK , OUTPUT );
+ 
+ pinMode( pot , INPUT );
+
+ pinMode( H , INPUT_PULLUP);
+ pinMode( B , INPUT_PULLUP);
+ pinMode( G , INPUT_PULLUP);
+ pinMode( D , INPUT_PULLUP);
+ 
+ for (int i = 0; i <= 3 ; i++ ){
+   pinMode( digit[i], OUTPUT );
+   digitalWrite(digit[i], HIGH);
+ }
+}
+
+void loop() {
+  affiche_7(analogRead(pot));
+
+    }
+
+
+
