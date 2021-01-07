@@ -31,6 +31,7 @@ int queue;
 int longueur_corps;
 int DIRECTION;
 unsigned int score;
+int gameover;
 
 unsigned long tmouv;
 unsigned long t0;
@@ -46,7 +47,8 @@ Position corps[longueur_max];
 
 //-----------------------------------------------------------------------------
 
-void affiche_7(int s){
+void affiche_7(int s)
+{
   for ( int i = 0; i <=3; i++){
     
     int m2 = pow(10,4-i) + 0.5; //le + 0.5 permet d'avoir 10000 ou 1000 en int au lieu de 9999 ou 999, du à un bug ARDUINO // la fonction pow fonctionne en floats.
@@ -74,18 +76,19 @@ void affiche_matrice (int cx,int cy)
 {
     dessin[cy] = bit(7-cx);
     
-    for (int i = 0 ; i <= 7 ; i++ ){
-      byte p = bit(i);
+   
+      byte p = bit(cy);
       digitalWrite ( RCLK, LOW ) ;// les deux multiplexeurs sont en série et sont donc sur la même horloge.
         shiftOut( SER , SRCLK , LSBFIRST, p);//envoie au deuxième multiplexeur la colonne à allumer.
-        shiftOut( SER , SRCLK , LSBFIRST, ~(dessin[i]));//envoie au premier multilplexeur la ligne a éteindre
+        shiftOut( SER , SRCLK , LSBFIRST, ~(dessin[cy]));//envoie au premier multilplexeur la ligne a éteindre
       digitalWrite ( RCLK , HIGH ) ;//on va ainsi avoir les 2 multiplexeurs synchronisés et avoir un seul bit allumé à ce moment précis.
-  }
+  
 }
 
  //-----------------------------------------------------------------------------
  
-bool appuyeBouton(int bouton) { //Check quel bouton est appuyé
+bool appuyeBouton(int bouton) //Check quel bouton est appuyé
+{ 
   int BA;
   if (digitalRead(bouton) == LOW){
     if (BA = 0) {
@@ -102,11 +105,13 @@ bool appuyeBouton(int bouton) { //Check quel bouton est appuyé
 
 //-----------------------------------------------------------------------------
 
-bool PositionValideNourriture() { //On utilise bool pour recupérer un état True ou False
+bool PositionValideNourriture() //On utilise bool pour recupérer un état True ou False
+{ 
     if (nourriture.x < 0 || nourriture.y < 0) return false;
     for (int i = tete; i <= queue; i++) {
         if (corps[i].x == nourriture.x && corps[i].y == nourriture.y) return false;
     }
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -114,26 +119,26 @@ bool PositionValideNourriture() { //On utilise bool pour recupérer un état Tru
 void SpawnNourriture() //Fait apparaitre la nourriture
 { 
   while (!PositionValideNourriture()) { //Quand position invalide, PositionValideNourriture est false
-    nourriture.x = random(8);
-    nourriture.y = random(8); //Stock un nombre aleatoire entre 0 et 7 pour les coordonnées de la nourriture
+    nourriture = {random(8),random(8)}; //Stock un nombre aleatoire entre 0 et 7 pour les coordonnées de la nourriture
   }
 }
 
 
 //-----------------------------------------------------------------------------
-void MiamMiam() { //Fonction qui vérifie si la nourriture a été mangé
+void MiamMiam() //Fonction qui vérifie si la nourriture a été mangé
+{ 
   if (corps[tete].x == nourriture.x && corps[tete].y == nourriture.y) { //Vérifie que la tête a bien les mêmes coordonnées que la nourriture
     if (longueur_corps < longueur_max) { //Vérifie que la longueur max du corps n'est pas atteinte
-      longueur_corps ++; //Augmente la longueur du corp de 1
-      queue ++; //Réduit de 1 la longueur que peut avoir la queue comme corps augmente
+      longueur_corps ++; //Augmente la longueur du corps de 1
+      queue ++; 
     }
     if (longueur_corps <= 10){
       score += 10;
     }
-    if (10 < longueur_corps <= 20){
+    if ((10 < longueur_corps)&& (longueur_corps <= 20)){
       score += 25;
     }
-    if (20 < longueur_corps <= 25){
+    if ((20 < longueur_corps)&& (longueur_corps <= 25)){
       score += 50;
     }
     if (longueur_corps > 25){
@@ -146,7 +151,8 @@ void MiamMiam() { //Fonction qui vérifie si la nourriture a été mangé
 
 //-----------------------------------------------------------------------------
 
-void CheckDirection() {
+void CheckDirection() // comme son nom l'indique, cette fonction va retourner la valeur de la direction(haut bas gauche droite) à chaque fois qu'elle est appelée.
+  {
   if (DIRECTION == haut || DIRECTION == bas) {
     if (appuyeBouton(D) == HIGH) {
       DIRECTION = droite;
@@ -162,14 +168,15 @@ void CheckDirection() {
     if (appuyeBouton(B) == HIGH) {
       DIRECTION = bas;
     }
-  }
+  }// Si rien n'est détecté, la valeur de la direction ne change pas.
   return DIRECTION;
 }
 
 //-----------------------------------------------------------------------------
 
-void MouvementSnake() {
-  CheckDirection();
+void MouvementSnake() 
+{
+
   for (int i = queue ; i >= 1  ; i--){
     corps[i].x = corps[i-1].x;
     corps[i].y = corps[i-1].y;
@@ -215,19 +222,20 @@ void raz() //Remet le jeu a zéro
   queue = 2; //Position de base de la queue dans le tableau du corps
   score = 0; // Reset le score
   DIRECTION = gauche; //Direction de base
-  nourriture = {-1,-1}; //Permet la réapparition de nourriture
+  nourriture = {4,4}; //Permet la réapparition de nourriture
   score = 0;
+  gameover = 0;
 }
 
-bool Gameover() //on regarde à tout instant si le joueur a perdu
-{
-  for (int i = tete; i <= queue; i++) {
-    if ((corps[tete].x == corps[i].x) && (corps[tete].y == corps[i].y)) {
-      return false;
-    }
-    else return true;
-  }
-}
+//int Gameover() //on regarde à tout instant si le joueur a perdu
+//{
+//  for (int i = tete + 1 ; i <= queue; i++) {
+//    if ((corps[tete].x == corps[i].x) && (corps[tete].y == corps[i].y)) {
+//      return 1;
+//    }
+//    else return 0;
+//  }
+//}
 
 int lecpot()
 {
@@ -257,13 +265,13 @@ void setup() {
  }
  raz();
 
-// Serial.begin(9600);
+ Serial.begin(9600);
 }
 
 void loop() {
     unsigned long t = millis();
-//    Serial.print("GO =");
-//    Serial.println(Gameover());
+// Serial.print("GO =");
+// Serial.println(Gameover());
 //    Serial.print("t =");
 //    Serial.println(t);
 //    Serial.print("tmouv =");
@@ -272,19 +280,26 @@ void loop() {
 //    Serial.println(lecpot());
 //    Serial.print("t0 =");
 //    Serial.println(t0);
-     PositionValideNourriture();
-     //SpawnNourriture();
-    for(int n = 0; n < longueur_corps;n++){
+ if (gameover == 0 ){
+  CheckDirection();
+  affiche_matrice(corps[tete].x,corps[tete].y);
+    for(int n = tete+1; n <= queue;n++)
+    {
       affiche_matrice(corps[n].x,corps[n].y);
+      if ((corps[tete].x == corps[n].x) && (corps[tete].y == corps[n].y)) 
+      {
+      gameover = 1;
+      }
     };
     affiche_matrice(nourriture.x,nourriture.y);
     affiche_7(score);
     tmouv = t - t0;
-    if (tmouv > lecpot()){
+    if (tmouv > lecpot())//permet de régler la vitesse avec le potentiomètre en réglant le temps entre 2 mouvements.
+    {
       MouvementSnake();
       MiamMiam();
       t0 = t;
     }
-
-
+ }
+ 
 }
