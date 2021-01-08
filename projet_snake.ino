@@ -255,15 +255,7 @@ void raz() //Remet le jeu a zéro
   gameover = 0;
 }
 
-//int Gameover() //on regarde à tout instant si le joueur a perdu
-//{
-//  for (int i = tete + 1 ; i <= queue; i++) {
-//    if ((corps[tete].x == corps[i].x) && (corps[tete].y == corps[i].y)) {
-//      return 1;
-//    }
-//    else return 0;
-//  }
-//}
+
 
 int lecpot()
 {
@@ -298,16 +290,6 @@ void setup() {
 
 void loop() {
     unsigned long t = millis();
-//    Serial.print("GO =");
-//    Serial.println(Gameover());
-//    Serial.print("t =");
-//    Serial.println(t);
-//    Serial.print("tmouv =");
-//    Serial.println(tmouv);
-//    Serial.print("lecpot =");
-//    Serial.println(lecpot());
-//    Serial.print("t0 =");
-//    Serial.println(t0);
  if (gameover == 0 ){
   CheckDirection();
   affiche_matrice(corps[tete].x,corps[tete].y);
